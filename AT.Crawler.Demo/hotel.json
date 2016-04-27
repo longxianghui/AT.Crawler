@@ -1,0 +1,14 @@
+﻿{
+  "Name": "#detail_pageHeader h2 span",
+  "Level": "#detail_pageHeader h2 em",
+  "Address": "#detail_pageHeader p span",
+  "NameEn": "#descContent",
+  "Contact": "#descContent div:first dl dd cite:first",
+  "Fax": "#descContent div dl:eq(0) dd cite:last",
+  "Information": "",
+  "Description": "#descContent div dl:eq(2) dd p",
+  "OpeningDate": "#descContent div dl:eq(1) dd cite:contains('开业')",
+  "LastDecorationDate": "#descContent div dl:eq(1) dd cite:contains('装修')",
+  "RoomCount": "#descContent div dl:eq(1) dd cite:contains('间客房')",
+  "HighestFloor": "#descContent div dl:eq(1) dd cite:contains('层高')"
+}
