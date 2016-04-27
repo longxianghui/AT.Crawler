@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<sqlMap namespace="HotelRoomFacility" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ibatis.apache.org/mapping">
+  <alias>
+    <typeAlias alias="HotelRoomFacility" type="AT.Crawler.Model.Hotel,AT.Crawler.Model" />
+  </alias>
+  <statements>
+    <insert ID="HotelRoomFacility.Insert"  parameterClass="Hotel">
+      INSERT INTO `hotelroomfacilities`
+      (`Id`,
+      `HotelId`,
+      `RoomFacilitieId`,
+      `IsEnable`)
+      VALUES
+      (#Id#,
+      #HotelId#
+      ,
+      #RoomFacilitieId#
+      ,
+      #IsEnable#);
+
+    </insert>
+  </statements>
+</sqlMap>

@@ -87,11 +87,13 @@ namespace AT.Crawler.Demo
                     roomFacility.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.NodeValue });
                 }
             });
+            //房间设施基础数据
             //差集 插入数据库
             var newRoomFacilities = _roomFacilities.Except(roomFacility);
             //查询出来并保存在内存里面
             //todo
             _roomFacilities.AddRange(newRoomFacilities);
+            //查询酒店的房间设施
 
             var serviceFacility = new List<ServiceFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(6) dd .each-facility").Each((i, n) =>
