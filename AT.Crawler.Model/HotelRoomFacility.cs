@@ -10,8 +10,10 @@ namespace AT.Crawler.Model
     {
         public int Id { get; set; }
         public int RoomFacilityId { get; set; }
-        public string HotelId { get; set; }
+        public int HotelId { get; set; }
         public bool IsEnable { get; set; }
         public string Remark { get; set; }
+        public DateTime AddTime { get; set; }
+        public string RoomFacilityName { get; set; }
     }
 }

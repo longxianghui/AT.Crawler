@@ -9,12 +9,12 @@ using IBatisNet.DataAccess.Configuration;
 
 namespace AT.Crawler.DataAccess
 {
-    public class HotelService:BaseDao
+    public class HotelService : BaseDao
     {
-        public void Insert(Hotel model)
+        public int Insert(Hotel model)
         {
             var stmtId = "Hotel.Insert";
-             Dao.Insert(stmtId, model);
+            return (int)Dao.Insert(stmtId, model);
         }
 
         public HotelService(string dbContextID) : base(dbContextID)

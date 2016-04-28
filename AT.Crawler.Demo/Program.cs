@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using AT.Crawler.Abot.Crawler;
@@ -14,12 +15,31 @@ namespace AT.Crawler.Demo
 {
     class Program
     {
-        private static readonly List<RoomFacility> _roomFacilities = new List<RoomFacility>();
+        private static List<RoomFacility> _allRoomFacilities;
+        private static List<BaseFacility> _allBaseFacilities;
+        private static List<ServiceFacility> _allServiceFacilities;
         private List<ServiceFacility> _serviceFacilities = new List<ServiceFacility>();
         private List<BaseFacility> _baseFacilities = new List<BaseFacility>();
+        private static HotelService hotelService;
+        private static RoomFacilityService roomFacilityService;
+        private static HotelRoomFacilityService hotelRoomFacilityService;
+        private static ServiceFacilityService serviceFacilityService;
+        private static BaseFacilityService baseFacilityService;
+        private static HotelServiceFacilityService hotelServiceFacilityService;
+        private static HotelBaseFacilityService hotelBaseFacilityService;
         static void Main(string[] args)
         {
             log4net.Config.XmlConfigurator.Configure();
+            hotelService = new HotelService("Crawler");
+            roomFacilityService = new RoomFacilityService("Crawler");
+            hotelRoomFacilityService = new HotelRoomFacilityService("Crawler");
+            baseFacilityService = new BaseFacilityService("Crawler");
+            serviceFacilityService = new ServiceFacilityService("Crawler");
+            hotelBaseFacilityService = new HotelBaseFacilityService("Crawler");
+            hotelServiceFacilityService = new HotelServiceFacilityService("Crawler");
+            _allRoomFacilities = roomFacilityService.GetAll();
+            _allServiceFacilities = serviceFacilityService.GetAll();
+            _allBaseFacilities = baseFacilityService.GetAll();
             var url = "http://hotel.qunar.com/city/beijing_city/dt-21056";
             var crawler = new PoliteWebCrawler();
             //Register for events and create processing methods(both synchronous and asynchronous versions available)
@@ -54,13 +74,22 @@ namespace AT.Crawler.Demo
 
             if (string.IsNullOrEmpty(crawledPage.Content.Text))
                 Console.WriteLine("Page had no content {0}", crawledPage.Uri.AbsoluteUri);
-            //Process data
+            #region 基础数据
             var hotel = new Hotel();
-            hotel.HotelId = crawledPage.Uri.AbsoluteUri
+            hotel.HotelCode = crawledPage.Uri.AbsoluteUri
                 .Split('/')
                 .First(x => x.Contains("dt-"))
                 .Replace("dt-", "");
-            hotel.Name = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Name).Text();
+            var hotelName = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Name).Text();
+            if (hotelName.IndexOf("(", StringComparison.Ordinal) > 0)
+            {
+                hotel.NameEn = hotelName.Substring(hotelName.IndexOf("(", StringComparison.Ordinal), hotelName.IndexOf(")", StringComparison.Ordinal));
+            }
+            else
+            {
+                hotel.NameEn = hotelName;
+                hotel.Name = hotelName;
+            }
             hotel.Level = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Level).Text();
             hotel.Address = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Address).Attr("title");
             hotel.Contact = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Contact).Text().Replace("电话", "");
@@ -73,54 +102,109 @@ namespace AT.Crawler.Demo
             hotel.RoomCount =
                 e.CrawledPage.CsQueryDocument.Select(hotelConfig.HighestFloor).Text().Replace("间客房", "");
             hotel.Description = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Description).Text();
-            var roomFacility = new List<RoomFacility>();
-            var hotelRoomFacility = new List<HotelRoomFacility>();
+            hotel.Network = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Network).Text();
+            hotel.Id = hotelService.Insert(hotel);
+            #endregion
+            #region 房间设施
+            var roomFacilities = new List<RoomFacility>();
+            var hotelRoomFacilities = new List<HotelRoomFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(5) dd .each-facility").Each((i, n) =>
             {
                 if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
                 {
-                    roomFacility.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                    hotelRoomFacility.Add(new HotelRoomFacility { HotelId = hotel.HotelId, IsEnable = false, });
+                    roomFacilities.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
+                    hotelRoomFacilities.Add(new HotelRoomFacility { HotelId = hotel.Id, IsEnable = false, RoomFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
                 }
                 else
                 {
-                    roomFacility.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    roomFacilities.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    hotelRoomFacilities.Add(new HotelRoomFacility { HotelId = hotel.Id, IsEnable = true, RoomFacilityName = n.FirstElementChild.LastChild.NodeValue });
                 }
             });
             //房间设施基础数据
             //差集 插入数据库
-            var newRoomFacilities = _roomFacilities.Except(roomFacility);
+            var newRoomFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
             //查询出来并保存在内存里面
-            //todo
-            _roomFacilities.AddRange(newRoomFacilities);
-            //查询酒店的房间设施
-
-            var serviceFacility = new List<ServiceFacility>();
+            if (newRoomFacilities.Any())
+            {
+                foreach (var item in newRoomFacilities)
+                {
+                    int id = roomFacilityService.Insert(item);
+                    item.Id = id;
+                }
+            }
+            _allRoomFacilities.AddRange(newRoomFacilities);
+            foreach (var item in hotelRoomFacilities)
+            {
+                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
+                hotelRoomFacilityService.Insert(item);
+            }
+            #endregion
+            #region 服务设施
+            var serviceFacilities = new List<ServiceFacility>();
+            var hotelServiceFacilities = new List<HotelServiceFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(6) dd .each-facility").Each((i, n) =>
             {
                 if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
                 {
-                    serviceFacility.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
+                    serviceFacilities.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
+                    hotelServiceFacilities.Add(new HotelServiceFacility { HotelId = hotel.Id, IsEnable = true, ServiceFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
                 }
                 else
                 {
-                    serviceFacility.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    serviceFacilities.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    hotelServiceFacilities.Add(new HotelServiceFacility { HotelId = hotel.Id, IsEnable = true, ServiceFacilityName = n.FirstElementChild.LastChild.NodeValue });
+
                 }
             });
-            var baseFacility = new List<BaseFacility>();
+            var newBaseFacilities = _allServiceFacilities.Except(serviceFacilities).ToList();
+            //查询出来并保存在内存里面
+            if (newBaseFacilities.Any())
+            {
+                foreach (var item in newBaseFacilities)
+                {
+                    int id = serviceFacilityService.Insert(item);
+                    item.Id = id;
+                }
+            }
+            _allServiceFacilities.AddRange(newBaseFacilities);
+            foreach (var item in hotelRoomFacilities)
+            {
+                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
+                hotelRoomFacilityService.Insert(item);
+            }
+            #endregion
+            #region 基础设施
+            var baseFacilities = new List<BaseFacility>();
+            var hotelBaseFacilities =new List<HotelBaseFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(7) dd .each-facility").Each((i, n) =>
             {
                 if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
                 {
-                    baseFacility.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
+                    baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
                 }
                 else
                 {
-                    baseFacility.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.NodeValue });
                 }
             });
-            var hotelService = new HotelService("Crawler");
-            hotelService.Insert(hotel);
+            var newBFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
+            //查询出来并保存在内存里面
+            if (newRoomFacilities.Any())
+            {
+                foreach (var item in newRoomFacilities)
+                {
+                    int id = roomFacilityService.Insert(item);
+                    item.Id = id;
+                }
+            }
+            _allRoomFacilities.AddRange(newRoomFacilities);
+            foreach (var item in hotelRoomFacilities)
+            {
+                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
+                hotelRoomFacilityService.Insert(item);
+            }
+            #endregion
             //获取基本数据的urlhttp://hotel.qunar.com/detail/detailMapData.jsp?seq=beijing_city_21056&type=traffic,subway,canguan,jingdian,ent
             /// detail / detailMapData.jsp ? seq = singapore_city_183 & type = traffic,subway,canguan,jingdian,ent
 

@@ -36,6 +36,7 @@
       #Fax#,
       #NameEn#
       )
+      <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
     </insert>
   </statements>
 </sqlMap>

@@ -10,5 +10,6 @@
   "OpeningDate": "#descContent div dl:eq(1) dd cite:contains('开业')",
   "LastDecorationDate": "#descContent div dl:eq(1) dd cite:contains('装修')",
   "RoomCount": "#descContent div dl:eq(1) dd cite:contains('间客房')",
-  "HighestFloor": "#descContent div dl:eq(1) dd cite:contains('层高')"
+  "HighestFloor": "#descContent div dl:eq(1) dd cite:contains('层高')",
+  "Park": "#descContent dl:eq(3) dd"
 }

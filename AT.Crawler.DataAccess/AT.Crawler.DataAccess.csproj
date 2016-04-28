@@ -61,6 +61,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseFacilityService.cs" />
+    <Compile Include="HotelBaseFacilityService.cs" />
+    <Compile Include="HotelServiceFacilityService.cs" />
+    <Compile Include="ServiceFacilityService.cs" />
+    <Compile Include="RoomFacilityService.cs" />
+    <Compile Include="HotelRoomFacilityService.cs" />
     <Compile Include="HotelService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

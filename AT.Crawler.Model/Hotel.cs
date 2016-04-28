@@ -8,7 +8,8 @@ namespace AT.Crawler.Model
 {
     public class Hotel
     {
-        public string HotelId { get ; set ; }
+        public int Id { get; set; }
+        public string HotelCode { get ; set ; }
         public string Name { get; set; }
         public string Level { get; set; }
         public string Address { get; set; }
@@ -29,6 +30,7 @@ namespace AT.Crawler.Model
 
         public string Network { get; set; }
         public string RoomInfo { get; set; }
+        public DateTime AddTime { get; set; }
     }
 
 }
