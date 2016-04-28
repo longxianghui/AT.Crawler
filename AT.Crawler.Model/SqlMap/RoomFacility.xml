@@ -3,7 +3,7 @@
 <sqlMap namespace="RoomFacility" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://ibatis.apache.org/mapping">
   <alias>
-    <typeAlias alias="RoomFacility" type="AT.Crawler.Model.Hotel,AT.Crawler.Model" />
+    <typeAlias alias="RoomFacility" type="AT.Crawler.Model.RoomFacility,AT.Crawler.Model" />
   </alias>
   <statements>
     <insert ID="RoomFacility.Insert"  parameterClass="RoomFacility">

@@ -3,10 +3,10 @@
 <sqlMap namespace="HotelRoomFacility" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://ibatis.apache.org/mapping">
   <alias>
-    <typeAlias alias="HotelRoomFacility" type="AT.Crawler.Model.Hotel,AT.Crawler.Model" />
+    <typeAlias alias="HotelRoomFacility" type="AT.Crawler.Model.HotelRoomFacility,AT.Crawler.Model" />
   </alias>
   <statements>
-    <insert ID="HotelRoomFacility.Insert"  parameterClass="Hotel">
+    <insert ID="HotelRoomFacility.Insert"  parameterClass="HotelRoomFacility">
       INSERT INTO `hotelroomfacilities`
       (`Id`,
       `HotelId`,

@@ -14,5 +14,6 @@ namespace AT.Crawler.Model
         public bool IsEnable { get; set; }
         public string Remark { get; set; }
         public DateTime AddTime { get; set; }
+        public string BaseFacilityName { get; set; }
     }
 }

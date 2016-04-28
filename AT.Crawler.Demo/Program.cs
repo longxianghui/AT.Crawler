@@ -157,21 +157,21 @@ namespace AT.Crawler.Demo
 
                 }
             });
-            var newBaseFacilities = _allServiceFacilities.Except(serviceFacilities).ToList();
+            var newServiceFacilities = _allServiceFacilities.Except(serviceFacilities).ToList();
             //查询出来并保存在内存里面
-            if (newBaseFacilities.Any())
+            if (newServiceFacilities.Any())
             {
-                foreach (var item in newBaseFacilities)
+                foreach (var item in newServiceFacilities)
                 {
                     int id = serviceFacilityService.Insert(item);
                     item.Id = id;
                 }
             }
-            _allServiceFacilities.AddRange(newBaseFacilities);
-            foreach (var item in hotelRoomFacilities)
+            _allServiceFacilities.AddRange(newServiceFacilities);
+            foreach (var item in hotelServiceFacilities)
             {
-                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
-                hotelRoomFacilityService.Insert(item);
+                item.ServiceFacilityId = newServiceFacilities.First(x => x.Name == item.ServiceFacilityName).Id;
+                hotelServiceFacilityService.Insert(item);
             }
             #endregion
             #region 基础设施
@@ -188,7 +188,7 @@ namespace AT.Crawler.Demo
                     baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.NodeValue });
                 }
             });
-            var newBFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
+            var newBaseFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
             //查询出来并保存在内存里面
             if (newRoomFacilities.Any())
             {
@@ -198,11 +198,11 @@ namespace AT.Crawler.Demo
                     item.Id = id;
                 }
             }
-            _allRoomFacilities.AddRange(newRoomFacilities);
-            foreach (var item in hotelRoomFacilities)
+            _allRoomFacilities.AddRange(newBaseFacilities);
+            foreach (var item in hotelBaseFacilities)
             {
-                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
-                hotelRoomFacilityService.Insert(item);
+                item.BaseFacilityId = newRoomFacilities.First(x => x.Name == item.BaseFacilityName).Id;
+                hotelBaseFacilityService.Insert(item);
             }
             #endregion
             //获取基本数据的urlhttp://hotel.qunar.com/detail/detailMapData.jsp?seq=beijing_city_21056&type=traffic,subway,canguan,jingdian,ent
