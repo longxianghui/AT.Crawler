@@ -11,14 +11,14 @@
       (`Id`,
       `HotelId`,
       `RoomFacilityId`,
-      `IsEnable`,`Remark`)
+      `IsEnable`,`Remark`,`RoomFacilityName`)
       VALUES
       (#Id#,
       #HotelId#
       ,
       #RoomFacilityId#
       ,
-      #IsEnable#,#Remark#);
+      #IsEnable#,#Remark#,#RoomFacilityName#);
       <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
     </insert>
 

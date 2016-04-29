@@ -9,6 +9,7 @@ using AT.Crawler.Abot.Crawler;
 using AT.Crawler.Abot.Poco;
 using AT.Crawler.DataAccess;
 using AT.Crawler.Model;
+using CsQuery;
 using CsQuery.ExtensionMethods;
 
 namespace AT.Crawler.Demo
@@ -38,20 +39,37 @@ namespace AT.Crawler.Demo
             _allRoomFacilities = roomFacilityService.GetAll();
             _allServiceFacilities = serviceFacilityService.GetAll();
             _allBaseFacilities = baseFacilityService.GetAll();
-            var url = "http://hotel.qunar.com/city/beijing_city/dt-21056";
-            var crawler = new PoliteWebCrawler();
-            //Register for events and create processing methods(both synchronous and asynchronous versions available)
-            crawler.PageCrawlStartingAsync += crawler_ProcessPageCrawlStarting;
-            crawler.PageCrawlCompletedAsync += crawler_ProcessPageCrawlCompleted;
-            crawler.PageCrawlDisallowedAsync += crawler_PageCrawlDisallowed;
-            crawler.PageLinksCrawlDisallowedAsync += crawler_PageLinksCrawlDisallowed;
-            //for (int i = 0; i < 1; i++)
-            //{
-            //    int n = 21056;
-            //    var result = crawler.Crawl(new Uri(url + (n + i)));
-            //}
-            var result = crawler.Crawl(new Uri(url));
-            Console.ReadLine();
+            //var url = "http://hotel.qunar.com/city/beijing_city/dt-21056";
+            var urls = new List<string>
+            {
+                "http://hotel.qunar.com/city/singapore_city/dt-183",
+                "http://hotel.qunar.com/city/singapore_city/dt-1104",
+                "http://hotel.qunar.com/city/singapore_city/dt-118",
+                "http://hotel.qunar.com/city/singapore_city/dt-58",
+                "http://hotel.qunar.com/city/singapore_city/dt-1655",
+                "http://hotel.qunar.com/city/singapore_city/dt-95",
+                "http://hotel.qunar.com/city/singapore_city/dt-1105",
+                "http://hotel.qunar.com/city/singapore_city/dt-1088",
+                "http://hotel.qunar.com/city/singapore_city/dt-53"
+            };
+            foreach (var url in urls)
+            {
+                try
+                {
+                    var crawler = new PoliteWebCrawler();
+                    crawler.PageCrawlStartingAsync += crawler_ProcessPageCrawlStarting;
+                    crawler.PageCrawlCompletedAsync += crawler_ProcessPageCrawlCompleted;
+                    crawler.PageCrawlDisallowedAsync += crawler_PageCrawlDisallowed;
+                    crawler.PageLinksCrawlDisallowedAsync += crawler_PageLinksCrawlDisallowed;
+                    crawler.Crawl(new Uri(url));
+                }
+                catch (Exception ex)
+                {
+
+                    string ssss = ex.Message;
+                }
+
+            }
         }
         static void crawler_ProcessPageCrawlStarting(object sender, PageCrawlStartingArgs e)
         {
@@ -81,7 +99,8 @@ namespace AT.Crawler.Demo
             var hotelName = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Name).Text();
             if (hotelName.IndexOf("(", StringComparison.Ordinal) > 0)
             {
-                hotel.NameEn = hotelName.Substring(hotelName.IndexOf("(", StringComparison.Ordinal), hotelName.IndexOf(")", StringComparison.Ordinal));
+                hotel.NameEn = hotelName.Substring(hotelName.IndexOf("(", StringComparison.Ordinal)).Replace("(", "").Replace(")", "");
+                hotel.Name = hotelName.Substring(0, hotelName.IndexOf("(", StringComparison.Ordinal)).Replace(")", "");
             }
             else
             {
@@ -104,21 +123,18 @@ namespace AT.Crawler.Demo
             hotel.Park = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Park).Text().Replace("", "");
             hotel.Id = hotelService.Insert(hotel);
             #endregion
+
+            var name = string.Empty;
+            var isEnable = true;
+            var remark = string.Empty;
             #region 房间设施
             var roomFacilities = new List<RoomFacility>();
             var hotelRoomFacilities = new List<HotelRoomFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(5) dd .each-facility").Each((i, n) =>
             {
-                if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
-                {
-                    roomFacilities.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                    hotelRoomFacilities.Add(new HotelRoomFacility { HotelId = hotel.Id, IsEnable = false, RoomFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                }
-                else
-                {
-                    roomFacilities.Add(new RoomFacility { Name = n.FirstElementChild.LastChild.NodeValue });
-                    hotelRoomFacilities.Add(new HotelRoomFacility { HotelId = hotel.Id, IsEnable = true, RoomFacilityName = n.FirstElementChild.LastChild.NodeValue });
-                }
+                GetNameAndRemark(n.InnerHTML, out name, out remark, out isEnable);
+                roomFacilities.Add(new RoomFacility { Name = name });
+                hotelRoomFacilities.Add(new HotelRoomFacility { HotelId = hotel.Id, Remark = remark, IsEnable = isEnable, RoomFacilityName = name });
             });
             //房间设施基础数据
             //差集 插入数据库
@@ -145,17 +161,9 @@ namespace AT.Crawler.Demo
             var hotelServiceFacilities = new List<HotelServiceFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(6) dd .each-facility").Each((i, n) =>
             {
-                if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
-                {
-                    serviceFacilities.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                    hotelServiceFacilities.Add(new HotelServiceFacility { HotelId = hotel.Id, IsEnable = true, ServiceFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                }
-                else
-                {
-                    serviceFacilities.Add(new ServiceFacility { Name = n.FirstElementChild.LastChild.NodeValue });
-                    hotelServiceFacilities.Add(new HotelServiceFacility { HotelId = hotel.Id, IsEnable = true, ServiceFacilityName = n.FirstElementChild.LastChild.NodeValue });
-
-                }
+                GetNameAndRemark(n.InnerHTML, out name, out remark, out isEnable);
+                serviceFacilities.Add(new ServiceFacility { Name = name });
+                hotelServiceFacilities.Add(new HotelServiceFacility { HotelId = hotel.Id, Remark = remark, IsEnable = isEnable, ServiceFacilityName = name });
             });
             names = serviceFacilities.Select(x => x.Name).Except(_allServiceFacilities.Select(x => x.Name)).ToList();
             var newServiceFacilities = new List<ServiceFacility>();
@@ -180,16 +188,9 @@ namespace AT.Crawler.Demo
             var hotelBaseFacilities = new List<HotelBaseFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(7) dd .each-facility").Each((i, n) =>
             {
-                if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
-                {
-                    baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                    hotelBaseFacilities.Add(new HotelBaseFacility { HotelId = hotel.Id, IsEnable = true, BaseFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
-                }
-                else
-                {
-                    baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.NodeValue });
-                    hotelBaseFacilities.Add(new HotelBaseFacility { HotelId = hotel.Id, IsEnable = true, BaseFacilityName = n.FirstElementChild.LastChild.NodeValue });
-                }
+                GetNameAndRemark(n.InnerHTML, out name, out remark, out isEnable);
+                baseFacilities.Add(new BaseFacility { Name = name });
+                hotelBaseFacilities.Add(new HotelBaseFacility { HotelId = hotel.Id, Remark = remark, IsEnable = isEnable, BaseFacilityName = name });
             });
             names = baseFacilities.Select(x => x.Name).Except(_allBaseFacilities.Select(x => x.Name)).ToList();
             var newBaseFacilities = new List<BaseFacility>();
@@ -224,6 +225,39 @@ namespace AT.Crawler.Demo
         {
             PageToCrawl pageToCrawl = e.PageToCrawl;
             Console.WriteLine("Did not crawl page {0} due to {1}", pageToCrawl.Uri.AbsoluteUri, e.DisallowedReason);
+        }
+
+        static void GetNameAndRemark(string html, out string name, out string remark, out bool isEnable)
+        {
+            var dom = (CQ)html;
+            remark = string.Empty;
+            isEnable = true;
+            if (html.Contains("提供"))
+            {
+                if (html.Contains("</b>"))
+                {
+                    remark = dom.Select("b").Text();
+                    name = dom.Document.FirstElementChild.FirstChild.NextSibling.NodeValue.Trim();
+                }
+                else
+                {
+                    name = dom.Document.FirstChild.LastChild.NodeValue;
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        name = dom.Select("span").Text().Replace("", "").Replace("", "");
+                    }
+                }
+            }
+
+            else
+            {
+                isEnable = false;
+                name = dom.Select(".gray").Text();
+                if (string.IsNullOrEmpty(name))
+                {
+                    name = dom.Select("span").Text().Replace("", "").Replace("","");
+                }
+            }
         }
     }
 }
