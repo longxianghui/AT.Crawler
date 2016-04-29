@@ -16,8 +16,8 @@
       #Name#);
       <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
     </insert>
-    <select ID="BaseFacility.GetAll"  parameterClass="BaseFacility">
-      select * from BaseFacilities
+    <select ID="RoomFacility.GetAll" resultClass="RoomFacility">
+      select * from roomfacilities
     </select>
   </statements>
 </sqlMap>

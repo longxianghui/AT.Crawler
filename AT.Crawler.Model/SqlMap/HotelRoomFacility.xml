@@ -10,13 +10,13 @@
       INSERT INTO `hotelroomfacilities`
       (`Id`,
       `HotelId`,
-      `RoomFacilitieId`,
+      `RoomFacilityId`,
       `IsEnable`,`Remark`)
       VALUES
       (#Id#,
       #HotelId#
       ,
-      #RoomFacilitieId#
+      #RoomFacilityId#
       ,
       #IsEnable#,#Remark#);
       <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>

@@ -13,7 +13,6 @@ namespace AT.Crawler.Model
         public int HotelId { get; set; }
         public bool IsEnable { get; set; }
         public string Remark { get; set; }
-        public DateTime AddTime { get; set; }
         public string ServiceFacilityName { get; set; }
     }
 }

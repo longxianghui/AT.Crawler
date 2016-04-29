@@ -20,17 +20,14 @@ namespace AT.Crawler.Model
         public string Description { get; set; }
         public string OpeningDate { get; set; }
         public string LastDecorationDate { get; set; }
-
         public string RoomCount { get; set; }
         public string HighestFloor { get; set; }
         /// <summary>
         /// 停车场信息
         /// </summary>
         public string Park { get; set; }
-
         public string Network { get; set; }
         public string RoomInfo { get; set; }
-        public DateTime AddTime { get; set; }
     }
 
 }

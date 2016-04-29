@@ -8,7 +8,7 @@
   <statements>
     <insert ID="Hotel.Insert"  parameterClass="Hotel">
       insert hotel(
-      HotelId,
+      HotelCode,
       Name,
       Level,
       Address,
@@ -20,9 +20,11 @@
       RoomCount,
       HighestFloor,
       Fax,
-      NameEn
+      NameEn,
+      Park,
+      Network
       ) values (
-      #HotelId#,
+      #HotelCode#,
       #Name#,
       #Level#,
       #Address#,
@@ -34,7 +36,9 @@
       #RoomCount#,
       #HighestFloor#,
       #Fax#,
-      #NameEn#
+      #NameEn#,
+      #Park#,
+      #Network#
       )
       <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
     </insert>

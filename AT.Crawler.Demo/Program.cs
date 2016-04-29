@@ -18,8 +18,6 @@ namespace AT.Crawler.Demo
         private static List<RoomFacility> _allRoomFacilities;
         private static List<BaseFacility> _allBaseFacilities;
         private static List<ServiceFacility> _allServiceFacilities;
-        private List<ServiceFacility> _serviceFacilities = new List<ServiceFacility>();
-        private List<BaseFacility> _baseFacilities = new List<BaseFacility>();
         private static HotelService hotelService;
         private static RoomFacilityService roomFacilityService;
         private static HotelRoomFacilityService hotelRoomFacilityService;
@@ -100,9 +98,10 @@ namespace AT.Crawler.Demo
             hotel.HighestFloor =
                 e.CrawledPage.CsQueryDocument.Select(hotelConfig.HighestFloor).Text().Replace("层高", "").Replace("层", "");
             hotel.RoomCount =
-                e.CrawledPage.CsQueryDocument.Select(hotelConfig.HighestFloor).Text().Replace("间客房", "");
+                e.CrawledPage.CsQueryDocument.Select(hotelConfig.RoomCount).Text().Replace("间客房", "");
             hotel.Description = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Description).Text();
-            hotel.Network = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Network).Text();
+            hotel.Network = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Network).Text().Replace("", "");//图形方框
+            hotel.Park = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Park).Text().Replace("", "");
             hotel.Id = hotelService.Insert(hotel);
             #endregion
             #region 房间设施
@@ -123,20 +122,21 @@ namespace AT.Crawler.Demo
             });
             //房间设施基础数据
             //差集 插入数据库
-            var newRoomFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
+            var names = roomFacilities.Select(x => x.Name).Except(_allRoomFacilities.Select(x => x.Name)).ToList();
+            var newRoomFacilities = new List<RoomFacility>();
             //查询出来并保存在内存里面
-            if (newRoomFacilities.Any())
+            if (names.Any())
             {
-                foreach (var item in newRoomFacilities)
+                foreach (var item in names)
                 {
-                    int id = roomFacilityService.Insert(item);
-                    item.Id = id;
+                    int id = roomFacilityService.Insert(new RoomFacility { Name = item });
+                    newRoomFacilities.Add(new RoomFacility { Id = id, Name = item });
                 }
             }
             _allRoomFacilities.AddRange(newRoomFacilities);
             foreach (var item in hotelRoomFacilities)
             {
-                item.RoomFacilityId = newRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
+                item.RoomFacilityId = _allRoomFacilities.First(x => x.Name == item.RoomFacilityName).Id;
                 hotelRoomFacilityService.Insert(item);
             }
             #endregion
@@ -157,51 +157,55 @@ namespace AT.Crawler.Demo
 
                 }
             });
-            var newServiceFacilities = _allServiceFacilities.Except(serviceFacilities).ToList();
+            names = serviceFacilities.Select(x => x.Name).Except(_allServiceFacilities.Select(x => x.Name)).ToList();
+            var newServiceFacilities = new List<ServiceFacility>();
             //查询出来并保存在内存里面
-            if (newServiceFacilities.Any())
+            if (names.Any())
             {
-                foreach (var item in newServiceFacilities)
+                foreach (var item in names)
                 {
-                    int id = serviceFacilityService.Insert(item);
-                    item.Id = id;
+                    int id = serviceFacilityService.Insert(new ServiceFacility { Name = item });
+                    newServiceFacilities.Add(new ServiceFacility { Id = id, Name = item });
                 }
             }
             _allServiceFacilities.AddRange(newServiceFacilities);
             foreach (var item in hotelServiceFacilities)
             {
-                item.ServiceFacilityId = newServiceFacilities.First(x => x.Name == item.ServiceFacilityName).Id;
+                item.ServiceFacilityId = _allServiceFacilities.First(x => x.Name == item.ServiceFacilityName).Id;
                 hotelServiceFacilityService.Insert(item);
             }
             #endregion
             #region 基础设施
             var baseFacilities = new List<BaseFacility>();
-            var hotelBaseFacilities =new List<HotelBaseFacility>();
+            var hotelBaseFacilities = new List<HotelBaseFacility>();
             e.CrawledPage.CsQueryDocument.Select("#descContent dl:eq(7) dd .each-facility").Each((i, n) =>
             {
                 if (string.IsNullOrEmpty(n.FirstElementChild.LastChild.NodeValue))
                 {
                     baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.FirstChild.NodeValue });
+                    hotelBaseFacilities.Add(new HotelBaseFacility { HotelId = hotel.Id, IsEnable = true, BaseFacilityName = n.FirstElementChild.LastChild.FirstChild.NodeValue });
                 }
                 else
                 {
                     baseFacilities.Add(new BaseFacility { Name = n.FirstElementChild.LastChild.NodeValue });
+                    hotelBaseFacilities.Add(new HotelBaseFacility { HotelId = hotel.Id, IsEnable = true, BaseFacilityName = n.FirstElementChild.LastChild.NodeValue });
                 }
             });
-            var newBaseFacilities = _allRoomFacilities.Except(roomFacilities).ToList();
+            names = baseFacilities.Select(x => x.Name).Except(_allBaseFacilities.Select(x => x.Name)).ToList();
+            var newBaseFacilities = new List<BaseFacility>();
             //查询出来并保存在内存里面
-            if (newRoomFacilities.Any())
+            if (names.Any())
             {
-                foreach (var item in newRoomFacilities)
+                foreach (var item in names)
                 {
-                    int id = roomFacilityService.Insert(item);
-                    item.Id = id;
+                    int id = baseFacilityService.Insert(new BaseFacility { Name = item });
+                    newBaseFacilities.Add(new BaseFacility { Id = id, Name = item });
                 }
             }
-            _allRoomFacilities.AddRange(newBaseFacilities);
+            _allBaseFacilities.AddRange(newBaseFacilities);
             foreach (var item in hotelBaseFacilities)
             {
-                item.BaseFacilityId = newRoomFacilities.First(x => x.Name == item.BaseFacilityName).Id;
+                item.BaseFacilityId = _allBaseFacilities.First(x => x.Name == item.BaseFacilityName).Id;
                 hotelBaseFacilityService.Insert(item);
             }
             #endregion
