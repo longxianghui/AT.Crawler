@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<sqlMap namespace="BaseFacility" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ibatis.apache.org/mapping">
+  <alias>
+    <typeAlias alias="BaseFacility" type="AT.Crawler.Model.BaseFacility,AT.Crawler.Model" />
+  </alias>
+  <statements>
+    <insert ID="BaseFacility.Insert"  parameterClass="BaseFacility">
+      INSERT INTO `test`.`basefacilities`
+      (`Id`,
+      `Name`)
+      VALUES
+      (#Id#
+      ,
+      #Name#);
+      <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
+    </insert>
+    <select ID="BaseFacility.GetAll"  resultClass="BaseFacility">
+      select * from BaseFacilities
+    </select>
+  </statements>
+</sqlMap>

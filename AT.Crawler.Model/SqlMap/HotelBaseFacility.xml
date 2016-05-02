@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<sqlMap namespace="HotelBaseFacility" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ibatis.apache.org/mapping">
+  <alias>
+    <typeAlias alias="HotelBaseFacility" type="AT.Crawler.Model.HotelBaseFacility,AT.Crawler.Model" />
+  </alias>
+  <statements>
+    <insert ID="HotelBaseFacility.Insert"  parameterClass="HotelBaseFacility">
+      INSERT INTO `hotelBasefacilities`
+      (`Id`,
+      `HotelId`,
+      `BaseFacilityId`,
+      `IsEnable`,`Remark`,`BaseFacilityName`)
+      VALUES
+      (#Id#,
+      #HotelId#
+      ,
+      #BaseFacilityId#
+      ,
+      #IsEnable#,#Remark#,#BaseFacilityName#);
+      <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
+    </insert>
+  </statements>
+</sqlMap>
