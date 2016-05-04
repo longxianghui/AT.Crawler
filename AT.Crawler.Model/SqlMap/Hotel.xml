@@ -21,7 +21,8 @@
       Fax,
       NameEn,
       Park,
-      Network
+      Network,
+      BusinessArea
       ) values (
       #HotelCode#,
       #Name#,
@@ -36,7 +37,8 @@
       #Fax#,
       #NameEn#,
       #Park#,
-      #Network#
+      #Network#,
+      #BusinessArea#
       )
       <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
     </insert>

@@ -28,6 +28,7 @@ namespace AT.Crawler.Model
         public string Network { get; set; }
         public string RoomInfo { get; set; }
         public string CityCode { get; set; }
+        public string BusinessArea { get; set; }
     }
 
 }

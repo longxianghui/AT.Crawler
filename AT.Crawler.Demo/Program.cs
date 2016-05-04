@@ -118,7 +118,10 @@ namespace AT.Crawler.Demo
                 hotel.Name = hotelName;
             }
             hotel.Level = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Level).Text();
-            hotel.Address = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Address).Attr("title");
+            var address = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Address).Text().Replace("\n", "");
+            hotel.Address = address.Split('(')[0].TrimEnd();
+            var addressTemp = address.Replace(" ", "");
+            hotel.BusinessArea = addressTemp.Substring(addressTemp.IndexOf("("), addressTemp.IndexOf(")") - addressTemp.IndexOf("(")).Replace("(", "").Trim();
             hotel.Contact = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Contact).Text().Replace("电话", "");
             hotel.Fax = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Fax).Text().Replace("传真", "");
             hotel.OpeningDate = e.CrawledPage.CsQueryDocument.Select(hotelConfig.OpeningDate).Text().Replace("年开业", "");
