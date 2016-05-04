@@ -7,7 +7,7 @@
   </alias>
   <statements>
     <insert ID="BaseFacility.Insert"  parameterClass="BaseFacility">
-      INSERT INTO `test`.`basefacilities`
+      INSERT INTO `basefacilities`
       (`Id`,
       `Name`)
       VALUES

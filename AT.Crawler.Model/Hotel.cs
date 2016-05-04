@@ -16,7 +16,6 @@ namespace AT.Crawler.Model
         public string NameEn { get; set; }
         public string Contact { get; set; }
         public string Fax { get; set; }
-        public string Information { get; set; }
         public string Description { get; set; }
         public string OpeningDate { get; set; }
         public string LastDecorationDate { get; set; }
@@ -28,6 +27,7 @@ namespace AT.Crawler.Model
         public string Park { get; set; }
         public string Network { get; set; }
         public string RoomInfo { get; set; }
+        public string CityCode { get; set; }
     }
 
 }

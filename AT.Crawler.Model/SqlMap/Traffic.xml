@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<sqlMap namespace="Traffic" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://ibatis.apache.org/mapping">
+  <alias>
+    <typeAlias alias="Traffic" type="AT.Crawler.Model.Traffic,AT.Crawler.Model" />
+  </alias>
+  <statements>
+    <insert ID="Traffic.Insert"  parameterClass="Traffic">
+      INSERT INTO `traffics`
+      (
+      `Name`,
+      `GPoint`,
+      `BPoint`,
+      `Distance`,
+      `Category`,
+      `HotelId`)
+      VALUES
+      (#Name#,
+      #GPoint#,
+      #BPoint#,
+      #Distance#,
+      #Category#,
+      #HotelId#);
+      <selectKey resultClass="int" type="post" property="Id"> SELECT @@IDENTITY AS Id </selectKey>
+    </insert>
+  </statements>
+</sqlMap>

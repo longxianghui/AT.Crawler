@@ -7,13 +7,12 @@
   </alias>
   <statements>
     <insert ID="Hotel.Insert"  parameterClass="Hotel">
-      insert hotel(
+      insert hotels(
       HotelCode,
       Name,
       Level,
       Address,
       Contact,
-      Information,
       Description,
       OpeningDate,
       LastDecorationDate,
@@ -29,7 +28,6 @@
       #Level#,
       #Address#,
       #Contact#,
-      #Information#,
       #Description#,
       #OpeningDate#,
       #LastDecorationDate#,

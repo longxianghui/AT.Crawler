@@ -69,6 +69,7 @@
     <Compile Include="HotelRoomFacilityService.cs" />
     <Compile Include="HotelService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TrafficService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

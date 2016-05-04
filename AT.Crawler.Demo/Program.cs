@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ using AT.Crawler.DataAccess;
 using AT.Crawler.Model;
 using CsQuery;
 using CsQuery.ExtensionMethods;
+using CsQuery.Utility;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace AT.Crawler.Demo
 {
@@ -26,6 +30,7 @@ namespace AT.Crawler.Demo
         private static BaseFacilityService baseFacilityService;
         private static HotelServiceFacilityService hotelServiceFacilityService;
         private static HotelBaseFacilityService hotelBaseFacilityService;
+        private static TrafficService trafficService;
         static void Main(string[] args)
         {
             log4net.Config.XmlConfigurator.Configure();
@@ -36,6 +41,7 @@ namespace AT.Crawler.Demo
             serviceFacilityService = new ServiceFacilityService("Crawler");
             hotelBaseFacilityService = new HotelBaseFacilityService("Crawler");
             hotelServiceFacilityService = new HotelServiceFacilityService("Crawler");
+            trafficService = new TrafficService("Crawler");
             _allRoomFacilities = roomFacilityService.GetAll();
             _allServiceFacilities = serviceFacilityService.GetAll();
             _allBaseFacilities = baseFacilityService.GetAll();
@@ -56,28 +62,32 @@ namespace AT.Crawler.Demo
             {
                 try
                 {
-                    var crawler = new PoliteWebCrawler();
-                    crawler.PageCrawlStartingAsync += crawler_ProcessPageCrawlStarting;
-                    crawler.PageCrawlCompletedAsync += crawler_ProcessPageCrawlCompleted;
-                    crawler.PageCrawlDisallowedAsync += crawler_PageCrawlDisallowed;
-                    crawler.PageLinksCrawlDisallowedAsync += crawler_PageLinksCrawlDisallowed;
-                    crawler.Crawl(new Uri(url));
+
+                    var hotelCrawler = new PoliteWebCrawler();
+                    hotelCrawler.PageCrawlStartingAsync += hotel_ProcessPageCrawlStarting;
+                    hotelCrawler.PageCrawlCompletedAsync += hotel_ProcessPageCrawlCompleted;
+                    hotelCrawler.PageCrawlDisallowedAsync += hotel_PageCrawlDisallowed;
+                    hotelCrawler.PageLinksCrawlDisallowedAsync += hotel_PageLinksCrawlDisallowed;
+                    hotelCrawler.Crawl(new Uri(url));
+
+
+
                 }
                 catch (Exception ex)
                 {
-
                     string ssss = ex.Message;
                 }
 
             }
         }
-        static void crawler_ProcessPageCrawlStarting(object sender, PageCrawlStartingArgs e)
+        #region hotel
+        static void hotel_ProcessPageCrawlStarting(object sender, PageCrawlStartingArgs e)
         {
             PageToCrawl pageToCrawl = e.PageToCrawl;
             Console.WriteLine("About to crawl link {0} which was found on page {1}", pageToCrawl.Uri.AbsoluteUri, pageToCrawl.ParentUri.AbsoluteUri);
         }
 
-        static void crawler_ProcessPageCrawlCompleted(object sender, PageCrawlCompletedArgs e)
+        static void hotel_ProcessPageCrawlCompleted(object sender, PageCrawlCompletedArgs e)
         {
 
             var hotelConfig = ConfigManager.ConfigManager.GetCreateConfig<Hotel>("hotel");
@@ -90,12 +100,12 @@ namespace AT.Crawler.Demo
 
             if (string.IsNullOrEmpty(crawledPage.Content.Text))
                 Console.WriteLine("Page had no content {0}", crawledPage.Uri.AbsoluteUri);
+            var hotelCode = crawledPage.Uri.AbsoluteUri.Split('/').First(x => x.Contains("dt-")).Replace("dt-", "");
+            var cityCode = crawledPage.Uri.AbsoluteUri.Split('/').First(x => x.Contains("_city")).Replace("_city", "");
             #region 基础数据
             var hotel = new Hotel();
-            hotel.HotelCode = crawledPage.Uri.AbsoluteUri
-                .Split('/')
-                .First(x => x.Contains("dt-"))
-                .Replace("dt-", "");
+            hotel.HotelCode = hotelCode;
+            hotel.CityCode = cityCode;
             var hotelName = e.CrawledPage.CsQueryDocument.Select(hotelConfig.Name).Text();
             if (hotelName.IndexOf("(", StringComparison.Ordinal) > 0)
             {
@@ -210,22 +220,28 @@ namespace AT.Crawler.Demo
                 hotelBaseFacilityService.Insert(item);
             }
             #endregion
+
+            #region 交通位置
+            GetTraffic(hotel.Id, hotel.CityCode, hotel.HotelCode);
+            #endregion
+
             //获取基本数据的urlhttp://hotel.qunar.com/detail/detailMapData.jsp?seq=beijing_city_21056&type=traffic,subway,canguan,jingdian,ent
             /// detail / detailMapData.jsp ? seq = singapore_city_183 & type = traffic,subway,canguan,jingdian,ent
 
         }
 
-        static void crawler_PageLinksCrawlDisallowed(object sender, PageLinksCrawlDisallowedArgs e)
+        static void hotel_PageLinksCrawlDisallowed(object sender, PageLinksCrawlDisallowedArgs e)
         {
             CrawledPage crawledPage = e.CrawledPage;
             Console.WriteLine("Did not crawl the links on page {0} due to {1}", crawledPage.Uri.AbsoluteUri, e.DisallowedReason);
         }
 
-        static void crawler_PageCrawlDisallowed(object sender, PageCrawlDisallowedArgs e)
+        static void hotel_PageCrawlDisallowed(object sender, PageCrawlDisallowedArgs e)
         {
             PageToCrawl pageToCrawl = e.PageToCrawl;
             Console.WriteLine("Did not crawl page {0} due to {1}", pageToCrawl.Uri.AbsoluteUri, e.DisallowedReason);
         }
+        #endregion
 
         static void GetNameAndRemark(string html, out string name, out string remark, out bool isEnable)
         {
@@ -255,7 +271,37 @@ namespace AT.Crawler.Demo
                 name = dom.Select(".gray").Text();
                 if (string.IsNullOrEmpty(name))
                 {
-                    name = dom.Select("span").Text().Replace("", "").Replace("","");
+                    name = dom.Select("span").Text().Replace("", "").Replace("", "");
+                }
+            }
+        }
+
+        static void GetTraffic(int hotelId, string cityCode, string hotelCode)
+        {
+            var url =
+                $"http://hotel.qunar.com/detail/detailMapData.jsp?seq={cityCode}_city_{hotelCode}&type=traffic,subway,canguan,jingdian,ent";
+            using (var client = new HttpClient())
+            {
+                var result = client.GetAsync(url);
+                var json = result.Result.Content.ReadAsStringAsync().Result;
+                var jo = JsonConvert.DeserializeObject(json) as JObject;
+                foreach (var items in jo.Root.Last.Values())
+                {
+                    var category = ((JProperty)items).Name;
+                    if (category != "attrs")
+                    {
+                        foreach (var item in items.Values())
+                        {
+                            var traffic = new Traffic();
+                            traffic.GPoint = item["gpoint"].ToString().Replace("\r\n", "").Replace("[", "").Replace("]", "").Trim();
+                            traffic.BPoint = item["bpoint"].ToString().Replace("\r\n", "").Replace("[", "").Replace("]", "").Trim();
+                            traffic.Name = item["name"].ToString();
+                            traffic.Distance = item["distance"].ToString();
+                            traffic.HotelId = hotelId;
+                            traffic.Category = category;
+                            trafficService.Insert(traffic);
+                        }
+                    }
                 }
             }
         }
